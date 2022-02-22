@@ -22,7 +22,7 @@ from logger import *
 EPOCHS = 5
 ITERATES = 2000
 CRITIC_ITERS = 5
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 lambda1 = 1
 lambda2 = 0.1
 lambda3 = 0.1
