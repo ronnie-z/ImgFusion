@@ -135,23 +135,23 @@ if __name__ == '__main__':
                     fusion_img = netG.decoder(vis_list, ir_list)
 
                     # train netD_vis
-                    D_real_vis = netD_vis(vis_img).mean() # size: batch_size
-                    D_real_vis.backward(mone)
+                    D_real_vis = -netD_vis(vis_img).mean() # size: batch_size
+                    D_real_vis.backward()
                     D_fake_vis = netD_vis(fusion_img).mean()
-                    D_fake_vis.backward(one)
+                    D_fake_vis.backward()
                     gradient_penalty_vis = calc_gradient_penalty(netD_vis, vis_img, fusion_img, lambda2)
                     gradient_penalty_vis.backward()
-                    D_loss_vis = D_fake_vis - D_real_vis + gradient_penalty_vis
+                    D_loss_vis = D_fake_vis + D_real_vis + gradient_penalty_vis
                     optimizerD_vis.step()
 
                     #train netD_ir
-                    D_real_ir = netD_ir(ir_img).mean()  # size: batch_size
-                    D_real_ir.backward(mone)
+                    D_real_ir = -netD_ir(ir_img).mean()  # size: batch_size
+                    D_real_ir.backward()
                     D_fake_ir = netD_ir(fusion_img).mean()
-                    D_fake_ir.backward(one)
+                    D_fake_ir.backward()
                     gradient_penalty_ir = calc_gradient_penalty(netD_ir, ir_img, fusion_img, lambda3)
                     gradient_penalty_ir.backward()
-                    D_loss_ir = D_fake_ir - D_real_ir + gradient_penalty_ir
+                    D_loss_ir = D_fake_ir + D_real_ir + gradient_penalty_ir
                     optimizerD_ir.step()
                     D_loss_total = D_loss_vis + D_loss_ir
 
@@ -172,10 +172,10 @@ if __name__ == '__main__':
             ir_list = netG.encoder(ir_img)  # [g1,g2,g3,x3]
             fusion_img = netG.decoder(vis_list, ir_list)
 
-            G_fake_vis = netD_vis(fusion_img).mean().backward(mone)
-            G_fake_ir = netD_ir(fusion_img).mean().backward(mone)
-            G_loss_content = calc_generator_content_loss(vis_img, ir_img, fusion_img).backward(one)
-            G_loss_advers = -G_fake_ir - G_fake_vis
+            G_fake_vis = -netD_vis(fusion_img).mean().backward()
+            G_fake_ir = -netD_ir(fusion_img).mean().backward()
+            G_loss_content = calc_generator_content_loss(vis_img, ir_img, fusion_img).backward()
+            G_loss_advers = G_fake_ir + G_fake_vis
             G_loss_total = G_loss_advers + G_loss_content
             optimizerG.step()
 
