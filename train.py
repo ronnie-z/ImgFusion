@@ -179,12 +179,12 @@ if __name__ == '__main__':
 
             optimizerG.zero_grad()
 
-            _data = next(data)
-            vis_img = _data[0].cuda()
-            ir_img = _data[1].cuda()
-            vis_list = netG.encoder(vis_img)
-            ir_list = netG.encoder(ir_img)  # [g1,g2,g3,x3]
-            fusion_img = netG.decoder(vis_list, ir_list)
+            # _data = next(data)
+            # vis_img = _data[0].cuda()
+            # ir_img = _data[1].cuda()
+            # vis_list = netG.encoder(vis_img)
+            # ir_list = netG.encoder(ir_img)  # [g1,g2,g3,x3]
+            # fusion_img = netG.decoder(vis_list, ir_list)
 
             G_fake_vis = -netD_vis(fusion_img).mean()
             G_fake_ir = -netD_ir(fusion_img).mean()
