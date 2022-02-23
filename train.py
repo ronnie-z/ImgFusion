@@ -22,9 +22,9 @@ from net import *
 from logger import *
 
 EPOCHS = 5
-ITERATES = 200
+ITERATES = 2000
 CRITIC_ITERS = 5
-BATCH_SIZE = 4
+BATCH_SIZE = 16
 lambda1 = 0.1
 lambda2 = 10
 lambda3 = 10
@@ -77,7 +77,7 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA=1):
                               grad_outputs=torch.ones(disc_interpolates.size()).cuda(),
                               create_graph=True, retain_graph=True, only_inputs=True)[0]
     gradients = gradients.view(gradients.size(0), -1)
-    gradient_penalty = (gradients.norm(p=2, dim=1) - 1).mean() * LAMBDA
+    gradient_penalty = ((gradients.norm(p=2, dim=1) - 1) ** 2).mean() * LAMBDA
     return gradient_penalty
 mseLoss = nn.MSELoss()
 
@@ -145,7 +145,7 @@ if __name__ == '__main__':
                     gradient_penalty_vis = calc_gradient_penalty(netD_vis, vis_img, fusion_img, lambda2)
                     # gradient_penalty_vis.backward()
                     D_loss_vis = D_fake_vis + D_real_vis + gradient_penalty_vis
-                    print('D_real_vis:\t',D_real_vis)
+                    # print('D_real_vis:\t',D_real_vis)
                     # print('D_fake_vis:\t', D_fake_vis)
                     # print('gradient_penalty_vis:\t', gradient_penalty_vis)
 
@@ -161,7 +161,7 @@ if __name__ == '__main__':
                     # gradient_penalty_ir.backward()
                     D_loss_ir = D_fake_ir + D_real_ir + gradient_penalty_ir
 
-                    print('D_real_ir:\t', D_real_ir)
+                    # print('D_real_ir:\t', D_real_ir)
                     # print('D_fake_ir:\t', D_fake_ir)
                     # print('gradient_penalty_ir:\t', gradient_penalty_ir)
 
