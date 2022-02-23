@@ -43,7 +43,7 @@ class Block(nn.Module):
         return out
 
 class GCNet(nn.Module):
-    def __init__(self, in_channel, pool='att', fusions=['channel_add'], ratio=8):
+    def __init__(self, in_channel, pool='pool', fusions=['channel_add'], ratio=8):
         super(GCNet, self).__init__()
 
         self.pool = pool
