@@ -39,7 +39,8 @@ class ToTensor(object):
     def __call__(self, img):
         img = np.transpose(img.astype(np.float32), (2, 0, 1))
 
-        img = (img - np.min(img)) / (np.max(img) - np.min(img))
+        # img = (img - np.min(img)) / (np.max(img) - np.min(img))
+        img = img / 255
         tensor = torch.from_numpy(img).float()
         return tensor
 
