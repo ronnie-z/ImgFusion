@@ -45,7 +45,7 @@ class Block(nn.Module):
         return out
 
 class GCNet(nn.Module):
-    def __init__(self, in_channel, pool='pool', fusions=['channel_add'], ratio=8):
+    def __init__(self, in_channel, pool='att', fusions=['channel_add'], ratio=8):
         super(GCNet, self).__init__()
 
         self.pool = pool
@@ -143,7 +143,7 @@ class Generator(nn.Module):
         # decoder   3*eb_filter[0], out_channels
         self.DB1 = Block(3*eb_filter[0], out_channels, kernel_size = 3, stride = 1)
         self.DB2 = Block(3*eb_filter[1], eb_filter[0], 3, 1)
-        self.DB3 = Block(2*eb_filter[2], eb_filter[1], 3, 1)
+        self.DB3 = Block(4*eb_filter[2], eb_filter[1], 3, 1)
 
 
     def encoder(self, input):
@@ -152,10 +152,10 @@ class Generator(nn.Module):
         x2 = self.EB2(self.pool(x1))
         x3 = self.EB3(self.pool(x2))
 
-        # return self.GCNet1(x1), self.GCNet2(x2), self.GCNet3(x3), x3
-        return x1, x2, x3, x3
+        return self.GCNet1(x1), self.GCNet2(x2), self.GCNet3(x3), x3
+        # return x1, x2, x3, x3
     def decoder(self, en_vis_list, en_ir_list):
-        x3 = self.DB3(torch.cat([en_vis_list[2], en_ir_list[2]], dim = 1))
+        x3 = self.DB3(torch.cat([en_vis_list[2], en_ir_list[2], en_vis_list[3], en_ir_list[3]], dim = 1))
         x2 = self.DB2(torch.cat([en_vis_list[1], en_ir_list[1], self.up(x3)], dim = 1))
         x1 = self.DB1(torch.cat([en_vis_list[0], en_ir_list[0], self.up(x2)], dim = 1))
         return x1
