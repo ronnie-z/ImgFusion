@@ -15,7 +15,7 @@ class ConvLayer(nn.Module):
         # self.reflection_pad = nn.ReflectionPad2d(reflection_padding)   #按左右 上下顺序 反射填充
         self.conv2d = nn.Conv2d(in_channels, out_channels, kernel_size, stride, reflection_padding)
         # self.dropout = nn.Dropout2d(p=0.5)
-        self.bn = nn.BatchNorm2d(out_channels)
+        # self.bn = nn.BatchNorm2d(out_channels)
         self.relu = relu
         self.prelu = nn.PReLU(out_channels)
         self.leakyRelu = nn.LeakyReLU()
@@ -169,10 +169,11 @@ class Discriminator(nn.Module):
         self.block2 = Block(64, 128, 3, 1, 'leakyRelu')
         self.block3 = Block(128, 32, 3, 1, 'leakyRelu')
         self.fc1 = nn.Linear(32*32*32, 256)
+        self.relu = nn.LeakyReLU()
         self.fc2 = nn.Linear(256, 1)
 
         self.block = nn.Sequential(self.conv0, self.block1, self.block2, self.block3)
-        self.fc = nn.Sequential(self.fc1, self.fc2)
+        self.fc = nn.Sequential(self.fc1, self.relu, self.fc2)
 
     def forward(self, x):
         x = self.block(x)
