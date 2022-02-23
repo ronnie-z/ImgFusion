@@ -26,8 +26,8 @@ ITERATES = 2000
 CRITIC_ITERS = 5
 BATCH_SIZE = 4
 lambda1 = 1
-lambda2 = 0.1
-lambda3 = 0.1
+lambda2 = 0.001
+lambda3 = 0.001
 gamma = 1e-6 # γ
 mu = 120 # μ
 
