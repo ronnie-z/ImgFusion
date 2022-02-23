@@ -7,6 +7,8 @@ import numpy as np
 from cv2 import convertScaleAbs
 from torch import optim
 import torch.autograd as autograd
+from torch.autograd import Variable
+
 from dataset import DataSet
 from torchvision import transforms
 import sys, os
@@ -127,8 +129,8 @@ if __name__ == '__main__':
                     _data = next(data)
                     vis_img = _data[0].cuda()
                     ir_img = _data[1].cuda()
-                    vis_list = netG.encoder(vis_img)
-                    ir_list = netG.encoder(ir_img)  # [g1,g2,g3,x3]
+                    vis_list = netG.encoder(Variable(vis_img))
+                    ir_list = netG.encoder(Variable(ir_img))  # [g1,g2,g3,x3]
                     fusion_img = netG.decoder(vis_list, ir_list)
 
                     # train netD_vis
