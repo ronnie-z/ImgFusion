@@ -25,7 +25,7 @@ EPOCHS = 5
 ITERATES = 2000
 CRITIC_ITERS = 5
 BATCH_SIZE = 4
-lambda1 = 1
+lambda1 = 0.1
 lambda2 = 0.001
 lambda3 = 0.001
 gamma = 1e-6 # γ
@@ -82,8 +82,8 @@ mseLoss = nn.MSELoss()
 
 def laplacian(img_numpy):
     laplacian_img = cv2.Laplacian(img_numpy, cv2.CV_32F, ksize = 3)
-    # laplacian_img = convertScaleAbs(laplacian_img)
-    return laplacian_img
+    laplacian_img = convertScaleAbs(laplacian_img)
+    return laplacian_img.astype(np.float32)
 
 def img_gradient_calc(img):
     img_numpy = np.array(img.cpu().detach())   # b 1 128 128
@@ -159,6 +159,11 @@ if __name__ == '__main__':
                     gradient_penalty_ir = calc_gradient_penalty(netD_ir, ir_img, fusion_img, lambda3)
                     # gradient_penalty_ir.backward()
                     D_loss_ir = D_fake_ir + D_real_ir + gradient_penalty_ir
+
+                    print('D_real_ir:\t', D_real_ir)
+                    print('D_fake_ir:\t', D_fake_ir)
+                    print('gradient_penalty_ir:\t', gradient_penalty_ir)
+
                     D_loss_ir.backward()
                     optimizerD_vis.step()
                     optimizerD_ir.step()
