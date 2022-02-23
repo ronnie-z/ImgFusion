@@ -22,7 +22,7 @@ from net import *
 from logger import *
 
 EPOCHS = 5
-ITERATES = 2000
+ITERATES = 1000
 CRITIC_ITERS = 5
 BATCH_SIZE = 16
 lambda1 = 0.1
@@ -202,6 +202,12 @@ if __name__ == '__main__':
                             'G_loss_total:{})'.format(e, iter+1,ITERATES, D_loss_vis, D_loss_ir, D_loss_total,G_loss_advers,
                                                       G_loss_content, G_loss_total))
 
+        state = {'netD_vis_state': netD_vis.state_dict(),
+                 'netD_ir_state': netD_ir.state_dict()}
+        gen_filename = 'checkpoint_e%d_Gen.pth' % e
+        Disc_filename = 'checkpoint_e%d_Disc.pth' % e
+        torch.save(netG.state_dict(), gen_filename)
+        torch.save(state, Disc_filename)
 
 
 
