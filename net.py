@@ -15,12 +15,14 @@ class ConvLayer(nn.Module):
         # self.reflection_pad = nn.ReflectionPad2d(reflection_padding)   #按左右 上下顺序 反射填充
         self.conv2d = nn.Conv2d(in_channels, out_channels, kernel_size, stride, reflection_padding)
         # self.dropout = nn.Dropout2d(p=0.5)
+        self.bn = nn.BatchNorm2d(out_channels)
         self.relu = relu
         self.prelu = nn.PReLU(out_channels)
         self.leakyRelu = nn.LeakyReLU()
     def forward(self, x):
         # out = self.reflection_pad(x)  #这里相当于0填充，使得卷积后x的H W 不变
         out = self.conv2d(x)
+        out = self.bn(out)
         if 'prelu' in self.relu:
             out = self.prelu(out)
         else:
