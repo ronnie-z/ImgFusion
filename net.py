@@ -164,8 +164,8 @@ class Discriminator(nn.Module):
 
         self.conv0 = ConvLayer(in_channels, firstLayer_out_channels, 3, 1, 'leakyRelu')
         self.block1 = Block(firstLayer_out_channels, 32, 3, 2, 'leakyRelu')
-        self.block2 = Block(32, 64, 2, 1, 'leakyRelu')
-        self.block3 = Block(64, 16, 2, 1, 'leakyRelu')
+        self.block2 = Block(32, 64, 3, 2, 'leakyRelu')
+        self.block3 = Block(64, 16, 3, 2, 'leakyRelu')
         self.fc1 = nn.Linear(16*16*16, 256)
         self.fc2 = nn.Linear(256, 1)
 
