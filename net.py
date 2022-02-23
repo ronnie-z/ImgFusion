@@ -150,10 +150,10 @@ class Generator(nn.Module):
         x2 = self.EB2(self.pool(x1))
         x3 = self.EB3(self.pool(x2))
 
-        return self.GCNet1(x1), self.GCNet2(x2), self.GCNet3(x3), x3
-
+        # return self.GCNet1(x1), self.GCNet2(x2), self.GCNet3(x3), x3
+        return x1, x2, x3, x3
     def decoder(self, en_vis_list, en_ir_list):
-        x3 = self.DB3(torch.cat([en_vis_list[2], en_ir_list[2], en_vis_list[3], en_ir_list[3]], dim = 1))
+        x3 = self.DB3(torch.cat([en_vis_list[2], en_ir_list[2]], dim = 1))
         x2 = self.DB2(torch.cat([en_vis_list[1], en_ir_list[1], self.up(x3)], dim = 1))
         x1 = self.DB1(torch.cat([en_vis_list[0], en_ir_list[0], self.up(x2)], dim = 1))
         return x1
