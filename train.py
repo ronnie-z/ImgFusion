@@ -95,6 +95,7 @@ def img_gradient_calc(img):
 def calc_generator_content_loss(vis_img, ir_img, fusion_img):
     loss_ir_f = mseLoss(fusion_img, ir_img)
     loss_vis_f = mseLoss(img_gradient_calc(fusion_img), img_gradient_calc(vis_img))
+    print('loss_gradient_vis_and_fusion:\t',loss_vis_f)
     return lambda1*(mu*loss_ir_f + gamma*loss_vis_f)
 
 if __name__ == '__main__':
@@ -145,9 +146,9 @@ if __name__ == '__main__':
                     gradient_penalty_vis = calc_gradient_penalty(netD_vis, vis_img, fusion_img, lambda2)
                     # gradient_penalty_vis.backward()
                     D_loss_vis = D_fake_vis + D_real_vis + gradient_penalty_vis
-                    # print('D_real_vis:\t',D_real_vis)
-                    # print('D_fake_vis:\t', D_fake_vis)
-                    # print('gradient_penalty_vis:\t', gradient_penalty_vis)
+                    print('D_real_vis:\t',D_real_vis)
+                    print('D_fake_vis:\t', D_fake_vis)
+                    print('gradient_penalty_vis:\t', gradient_penalty_vis)
 
                     D_loss_vis.backward()
                     # optimizerD_vis.step()
@@ -163,7 +164,7 @@ if __name__ == '__main__':
 
                     # print('D_real_ir:\t', D_real_ir)
                     # print('D_fake_ir:\t', D_fake_ir)
-                    # print('gradient_penalty_ir:\t', gradient_penalty_ir)
+                    print('gradient_penalty_ir:\t', gradient_penalty_ir)
 
                     D_loss_ir.backward()
                     optimizerD_vis.step()
