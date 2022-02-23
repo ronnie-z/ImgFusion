@@ -174,7 +174,7 @@ class Discriminator(nn.Module):
 
     def forward(self, x):
         x = self.block(x)
-        x = x.view(-1, 64*128*128)
+        x = x.view(-1, 16*128*128)
         return self.fc(x).view(-1)
 
 
