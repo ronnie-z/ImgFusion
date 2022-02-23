@@ -22,7 +22,7 @@ class ConvLayer(nn.Module):
     def forward(self, x):
         # out = self.reflection_pad(x)  #这里相当于0填充，使得卷积后x的H W 不变
         out = self.conv2d(x)
-        out = self.bn(out)
+        # out = self.bn(out)
         if 'prelu' in self.relu:
             out = self.prelu(out)
         else:
