@@ -141,7 +141,7 @@ class Generator(nn.Module):
         # decoder   3*eb_filter[0], out_channels
         self.DB1 = Block(3*eb_filter[0], out_channels, kernel_size = 3, stride = 1)
         self.DB2 = Block(3*eb_filter[1], eb_filter[0], 3, 1)
-        self.DB3 = Block(4*eb_filter[2], eb_filter[1], 3, 1)
+        self.DB3 = Block(2*eb_filter[2], eb_filter[1], 3, 1)
 
 
     def encoder(self, input):
