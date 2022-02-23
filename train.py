@@ -132,6 +132,8 @@ if __name__ == '__main__':
                     vis_list = netG.encoder(Variable(vis_img))
                     ir_list = netG.encoder(Variable(ir_img))  # [g1,g2,g3,x3]
                     fusion_img = netG.decoder(vis_list, ir_list)
+                    fusion_img = fusion_img.detach()
+
 
                     # train netD_vis
                     D_real_vis = -netD_vis(vis_img).mean() # size: batch_size
