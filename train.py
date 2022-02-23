@@ -26,8 +26,8 @@ ITERATES = 200
 CRITIC_ITERS = 5
 BATCH_SIZE = 4
 lambda1 = 0.1
-lambda2 = 0.01
-lambda3 = 0.01
+lambda2 = 10
+lambda3 = 10
 gamma = 1e-6 # γ
 mu = 120 # μ
 
@@ -103,9 +103,9 @@ if __name__ == '__main__':
     netD_ir = Discriminator().cuda()
 
     # optimizer
-    optimizerG = optim.Adam(netG.parameters(), lr = 1e-3)
-    optimizerD_vis = optim.Adam(netD_vis.parameters(), lr = 1e-3)
-    optimizerD_ir = optim.Adam(netD_ir.parameters(), lr = 1e-3)
+    optimizerG = optim.Adam(netG.parameters(), lr = 1e-4)
+    optimizerD_vis = optim.Adam(netD_vis.parameters(), lr = 1e-4)
+    optimizerD_ir = optim.Adam(netD_ir.parameters(), lr = 1e-4)
 
     one = torch.FloatTensor([1]).cuda()
     mone = one * -1
@@ -135,6 +135,7 @@ if __name__ == '__main__':
                     fusion_img = fusion_img.detach()
                     fusion_img.requires_grad = True
 
+                    print(fusion_img)
 
                     # train netD_vis
                     D_real_vis = -netD_vis(vis_img).mean() # size: batch_size
@@ -144,9 +145,9 @@ if __name__ == '__main__':
                     gradient_penalty_vis = calc_gradient_penalty(netD_vis, vis_img, fusion_img, lambda2)
                     # gradient_penalty_vis.backward()
                     D_loss_vis = D_fake_vis + D_real_vis + gradient_penalty_vis
-                    print('D_real_vis:\t',D_real_vis)
-                    print('D_fake_vis:\t', D_fake_vis)
-                    print('gradient_penalty_vis:\t', gradient_penalty_vis)
+                    # print('D_real_vis:\t',D_real_vis)
+                    # print('D_fake_vis:\t', D_fake_vis)
+                    # print('gradient_penalty_vis:\t', gradient_penalty_vis)
 
                     D_loss_vis.backward()
                     # optimizerD_vis.step()
@@ -160,9 +161,9 @@ if __name__ == '__main__':
                     # gradient_penalty_ir.backward()
                     D_loss_ir = D_fake_ir + D_real_ir + gradient_penalty_ir
 
-                    print('D_real_ir:\t', D_real_ir)
-                    print('D_fake_ir:\t', D_fake_ir)
-                    print('gradient_penalty_ir:\t', gradient_penalty_ir)
+                    # print('D_real_ir:\t', D_real_ir)
+                    # print('D_fake_ir:\t', D_fake_ir)
+                    # print('gradient_penalty_ir:\t', gradient_penalty_ir)
 
                     D_loss_ir.backward()
                     optimizerD_vis.step()
