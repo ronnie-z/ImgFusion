@@ -19,7 +19,7 @@ class ConvLayer(nn.Module):
         self.relu = relu
         self.prelu = nn.PReLU(out_channels)
         self.leakyRelu = nn.LeakyReLU()
-
+        self.tanh = nn.Tanh()
     def forward(self, x):
         # out = self.reflection_pad(x)  #这里相当于0填充，使得卷积后x的H W 不变
         out = self.conv2d(x)
@@ -29,7 +29,7 @@ class ConvLayer(nn.Module):
         elif 'leakyRelu' in self.relu:
             out = self.leakyRelu(out)
         else:
-            out = nn.Tanh(out)
+            out = self.tanh(out)
         return out
 
 class Block(nn.Module):
@@ -39,7 +39,7 @@ class Block(nn.Module):
         # out_channels_def = out_channels
         blocklist = []
 
-        blocklist += [ConvLayer(in_channels, inner_channel, kernel_size, stride, relu),
+        blocklist += [ConvLayer(in_channels, inner_channel, kernel_size, stride),
                        ConvLayer(inner_channel, out_channels, 1, stride, relu)]
         self.encoderblock = nn.Sequential(*blocklist)
 
