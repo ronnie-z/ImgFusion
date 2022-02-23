@@ -118,7 +118,7 @@ class GCNet(nn.Module):
         return out
 
 class Generator(nn.Module):
-    def __init__(self, in_channels=1, firstLayer_out_channels=64, out_channels=1):
+    def __init__(self, in_channels=1, firstLayer_out_channels=32, out_channels=1):
         super(Generator, self).__init__()
         eb_filter = [32, 64, 64]
         kernel_size = 3
@@ -159,14 +159,14 @@ class Generator(nn.Module):
         return x1
 
 class Discriminator(nn.Module):
-    def __init__(self, in_channels=1, firstLayer_out_channels=64):
+    def __init__(self, in_channels=1, firstLayer_out_channels=32):
         super(Discriminator, self).__init__()
 
         self.conv0 = ConvLayer(in_channels, firstLayer_out_channels, 3, 1, 'leakyRelu')
-        self.block1 = Block(firstLayer_out_channels, 128, 3, 1, 'leakyRelu')
-        self.block2 = Block(128, 256, 3, 1, 'leakyRelu')
-        self.block3 = Block(256, 64, 3, 1, 'leakyRelu')
-        self.fc1 = nn.Linear(64*128*128, 1024)
+        self.block1 = Block(firstLayer_out_channels, 32, 3, 1, 'leakyRelu')
+        self.block2 = Block(32, 64, 3, 1, 'leakyRelu')
+        self.block3 = Block(64, 16, 3, 1, 'leakyRelu')
+        self.fc1 = nn.Linear(16*128*128, 1024)
         self.fc2 = nn.Linear(1024, 1)
 
         self.block = nn.Sequential(self.conv0, self.block1, self.block2, self.block3)

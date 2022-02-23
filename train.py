@@ -104,10 +104,6 @@ if __name__ == '__main__':
     optimizerD_vis = optim.Adam(netD_vis.parameters(), lr = 1e-4, betas = (0.5, 0.9))
     optimizerD_ir = optim.Adam(netD_ir.parameters(), lr = 1e-4, betas = (0.5, 0.9))
 
-    # loss
-    pix_loss_fr = nn.MSELoss()
-
-
     one = torch.FloatTensor([1]).cuda()
     mone = one * -1
     data = inf_train_gen() # data
