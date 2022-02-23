@@ -19,14 +19,17 @@ class ConvLayer(nn.Module):
         self.relu = relu
         self.prelu = nn.PReLU(out_channels)
         self.leakyRelu = nn.LeakyReLU()
+
     def forward(self, x):
         # out = self.reflection_pad(x)  #这里相当于0填充，使得卷积后x的H W 不变
         out = self.conv2d(x)
         # out = self.bn(out)
         if 'prelu' in self.relu:
             out = self.prelu(out)
-        else:
+        elif 'leakyRelu' in self.relu:
             out = self.leakyRelu(out)
+        else:
+            out = nn.Tanh(out)
         return out
 
 class Block(nn.Module):
@@ -141,7 +144,7 @@ class Generator(nn.Module):
         self.GCNet3 = GCNet(eb_filter[2])
 
         # decoder   3*eb_filter[0], out_channels
-        self.DB1 = Block(3*eb_filter[0], out_channels, kernel_size = 3, stride = 1)
+        self.DB1 = Block(3*eb_filter[0], out_channels, kernel_size = 3, stride = 1, relu = 'tanh')
         self.DB2 = Block(3*eb_filter[1], eb_filter[0], 3, 1)
         self.DB3 = Block(4*eb_filter[2], eb_filter[1], 3, 1)
 
