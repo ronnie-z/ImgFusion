@@ -133,6 +133,7 @@ if __name__ == '__main__':
                     ir_list = netG.encoder(Variable(ir_img))  # [g1,g2,g3,x3]
                     fusion_img = netG.decoder(vis_list, ir_list)
                     fusion_img = fusion_img.detach()
+                    fusion_img.requires_grad = True
 
 
                     # train netD_vis
