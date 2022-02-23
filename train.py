@@ -135,7 +135,6 @@ if __name__ == '__main__':
                     fusion_img = fusion_img.detach()
                     fusion_img.requires_grad = True
 
-                    print(fusion_img)
 
                     # train netD_vis
                     D_real_vis = -netD_vis(vis_img).mean() # size: batch_size
@@ -192,6 +191,7 @@ if __name__ == '__main__':
             G_loss_content = calc_generator_content_loss(vis_img, ir_img, fusion_img)
             G_loss_advers = G_fake_ir + G_fake_vis
             G_loss_total = G_loss_advers + G_loss_content
+            print('G_loss_total:\t',G_loss_total)
             G_loss_total.backward()
             optimizerG.step()
 
