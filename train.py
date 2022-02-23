@@ -77,7 +77,7 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA=1):
                               grad_outputs=torch.ones(disc_interpolates.size()).cuda(),
                               create_graph=True, retain_graph=True, only_inputs=True)[0]
     gradients = gradients.view(gradients.size(0), -1)
-    gradient_penalty = (gradients.norm(p=2, dim=1) - 1).mean() * LAMBDA
+    gradient_penalty = ((gradients.norm(p=2, dim=1) - 1) ** 2).mean() * LAMBDA
     return gradient_penalty
 mseLoss = nn.MSELoss()
 
@@ -95,7 +95,6 @@ def img_gradient_calc(img):
 def calc_generator_content_loss(vis_img, ir_img, fusion_img):
     loss_ir_f = mseLoss(fusion_img, ir_img)
     loss_vis_f = mseLoss(img_gradient_calc(fusion_img), img_gradient_calc(vis_img))
-    print('loss_gradient_vis_and_fusion:\t',loss_vis_f)
     return lambda1*(mu*loss_ir_f + gamma*loss_vis_f)
 
 if __name__ == '__main__':
