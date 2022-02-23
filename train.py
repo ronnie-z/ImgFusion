@@ -79,7 +79,7 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA=1):
 mseLoss = nn.MSELoss()
 
 def laplacian(img_numpy):
-    laplacian_img = cv2.Laplacian(img_numpy, cv2.CV_64F, ksize = 3)
+    laplacian_img = cv2.Laplacian(img_numpy, cv2.CV_32F, ksize = 3)
     laplacian_img = convertScaleAbs(laplacian_img)
     return laplacian_img
 
