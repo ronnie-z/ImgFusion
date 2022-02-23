@@ -80,7 +80,7 @@ mseLoss = nn.MSELoss()
 
 def laplacian(img_numpy):
     laplacian_img = cv2.Laplacian(img_numpy, cv2.CV_32F, ksize = 3)
-    laplacian_img = convertScaleAbs(laplacian_img)
+    # laplacian_img = convertScaleAbs(laplacian_img)
     return laplacian_img
 
 def img_gradient_calc(img):
