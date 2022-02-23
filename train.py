@@ -103,9 +103,9 @@ if __name__ == '__main__':
     netD_ir = Discriminator().cuda()
 
     # optimizer
-    optimizerG = optim.Adam(netG.parameters(), lr = 1e-4)
-    optimizerD_vis = optim.Adam(netD_vis.parameters(), lr = 1e-4)
-    optimizerD_ir = optim.Adam(netD_ir.parameters(), lr = 1e-4)
+    optimizerG = optim.Adam(netG.parameters(), lr = 1e-3)
+    optimizerD_vis = optim.Adam(netD_vis.parameters(), lr = 1e-3)
+    optimizerD_ir = optim.Adam(netD_ir.parameters(), lr = 1e-3)
 
     one = torch.FloatTensor([1]).cuda()
     mone = one * -1
