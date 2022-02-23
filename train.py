@@ -22,12 +22,12 @@ from net import *
 from logger import *
 
 EPOCHS = 5
-ITERATES = 2000
+ITERATES = 200
 CRITIC_ITERS = 5
 BATCH_SIZE = 4
 lambda1 = 0.1
-lambda2 = 0.001
-lambda3 = 0.001
+lambda2 = 0.01
+lambda3 = 0.01
 gamma = 1e-6 # γ
 mu = 120 # μ
 
@@ -76,7 +76,7 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA=1):
                               grad_outputs=torch.ones(disc_interpolates.size()).cuda(),
                               create_graph=True, retain_graph=True, only_inputs=True)[0]
     gradients = gradients.view(gradients.size(0), -1)
-    gradient_penalty = ((gradients.norm(p=2, dim=1) - 1) ** 2).mean() * LAMBDA
+    gradient_penalty = (gradients.norm(p=2, dim=1) - 1).mean() * LAMBDA
     return gradient_penalty
 mseLoss = nn.MSELoss()
 
