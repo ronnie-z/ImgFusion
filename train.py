@@ -145,7 +145,7 @@ if __name__ == '__main__':
                     gradient_penalty_vis = calc_gradient_penalty(netD_vis, vis_img, fusion_img, lambda2)
                     # gradient_penalty_vis.backward()
                     D_loss_vis = D_fake_vis + D_real_vis + gradient_penalty_vis
-                    # print('D_real_vis:\t',D_real_vis)
+                    print('D_real_vis:\t',D_real_vis)
                     # print('D_fake_vis:\t', D_fake_vis)
                     # print('gradient_penalty_vis:\t', gradient_penalty_vis)
 
@@ -161,7 +161,7 @@ if __name__ == '__main__':
                     # gradient_penalty_ir.backward()
                     D_loss_ir = D_fake_ir + D_real_ir + gradient_penalty_ir
 
-                    # print('D_real_ir:\t', D_real_ir)
+                    print('D_real_ir:\t', D_real_ir)
                     # print('D_fake_ir:\t', D_fake_ir)
                     # print('gradient_penalty_ir:\t', gradient_penalty_ir)
 
