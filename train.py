@@ -139,8 +139,8 @@ if __name__ == '__main__':
                     gradient_penalty_vis = calc_gradient_penalty(netD_vis, vis_img, fusion_img, lambda2)
                     # gradient_penalty_vis.backward()
                     D_loss_vis = D_fake_vis + D_real_vis + gradient_penalty_vis
-                    # D_loss_vis.backward()
-                    # optimizerD_vis.step()
+                    D_loss_vis.backward()
+                    optimizerD_vis.step()
 
                     #train netD_ir
                     D_real_ir = -netD_ir(ir_img).mean()  # size: batch_size
@@ -150,8 +150,8 @@ if __name__ == '__main__':
                     gradient_penalty_ir = calc_gradient_penalty(netD_ir, ir_img, fusion_img, lambda3)
                     # gradient_penalty_ir.backward()
                     D_loss_ir = D_fake_ir + D_real_ir + gradient_penalty_ir
-                    # D_loss_ir.backward()
-                    # optimizerD_ir.step()
+                    D_loss_ir.backward()
+                    optimizerD_ir.step()
                     D_loss_total = D_loss_vis + D_loss_ir
 
             ############################
@@ -176,8 +176,8 @@ if __name__ == '__main__':
             G_loss_content = calc_generator_content_loss(vis_img, ir_img, fusion_img)
             G_loss_advers = G_fake_ir + G_fake_vis
             G_loss_total = G_loss_advers + G_loss_content
-            # G_loss_total.backward()
-            # optimizerG.step()
+            G_loss_total.backward()
+            optimizerG.step()
 
             if iter % 10 == 9:
                 logger.info('Epoch-{}, Iterator-[{}/{}] ## Train D:(D_loss_vis:{}, D_loss_ir:{}' 
