@@ -182,7 +182,7 @@ if __name__ == '__main__':
             if iter % 10 == 9:
                 logger.info('Epoch-{}, Iterator-[{}/{}] ## Train D:(D_loss_vis:{}, D_loss_ir:{}' 
                             ', D_loss_total:{}) ## Train G:(G_loss_advers:{}, G_loss_content:{},' 
-                            'G_loss_total:{})'.format(e, i,ITERATES, D_loss_vis, D_loss_ir, D_loss_total,G_loss_advers,
+                            'G_loss_total:{})'.format(e, iter,ITERATES, D_loss_vis, D_loss_ir, D_loss_total,G_loss_advers,
                                                       G_loss_content, G_loss_total))
 
 
