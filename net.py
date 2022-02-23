@@ -163,18 +163,18 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.conv0 = ConvLayer(in_channels, firstLayer_out_channels, 3, 1, 'leakyRelu')
-        self.block1 = Block(firstLayer_out_channels, 32, 3, 1, 'leakyRelu')
-        self.block2 = Block(32, 64, 3, 1, 'leakyRelu')
-        self.block3 = Block(64, 16, 3, 1, 'leakyRelu')
-        self.fc1 = nn.Linear(16*128*128, 1024)
-        self.fc2 = nn.Linear(1024, 1)
+        self.block1 = Block(firstLayer_out_channels, 32, 3, 2, 'leakyRelu')
+        self.block2 = Block(32, 64, 2, 1, 'leakyRelu')
+        self.block3 = Block(64, 16, 2, 1, 'leakyRelu')
+        self.fc1 = nn.Linear(16*16*16, 256)
+        self.fc2 = nn.Linear(256, 1)
 
         self.block = nn.Sequential(self.conv0, self.block1, self.block2, self.block3)
         self.fc = nn.Sequential(self.fc1, self.fc2)
 
     def forward(self, x):
         x = self.block(x)
-        x = x.view(-1, 16*128*128)
+        x = x.view(-1, 16*16*16)
         return self.fc(x).view(-1)
 
 
