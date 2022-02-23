@@ -28,7 +28,7 @@ BATCH_SIZE = 16
 lambda1 = 0.1
 lambda2 = 10
 lambda3 = 10
-gamma = 1e-6 # γ
+gamma = 1e-5 # γ
 mu = 120 # μ
 
 use_cuda = torch.cuda.is_available()
@@ -40,7 +40,7 @@ class ToTensor(object):
         img = np.transpose(img.astype(np.float32), (2, 0, 1))
 
         # img = (img - np.min(img)) / (np.max(img) - np.min(img))
-        img = img / 255
+        img = img / 255.0
         tensor = torch.from_numpy(img).float()
         return tensor
 
@@ -77,7 +77,7 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA=1):
                               grad_outputs=torch.ones(disc_interpolates.size()).cuda(),
                               create_graph=True, retain_graph=True, only_inputs=True)[0]
     gradients = gradients.view(gradients.size(0), -1)
-    gradient_penalty = ((gradients.norm(p=2, dim=1) - 1) ** 2).mean() * LAMBDA
+    gradient_penalty = (gradients.norm(p=2, dim=1) - 1).mean() * LAMBDA
     return gradient_penalty
 mseLoss = nn.MSELoss()
 
@@ -109,8 +109,6 @@ if __name__ == '__main__':
     optimizerD_vis = optim.Adam(netD_vis.parameters(), lr = 1e-4)
     optimizerD_ir = optim.Adam(netD_ir.parameters(), lr = 1e-4)
 
-    one = torch.FloatTensor([1]).cuda()
-    mone = one * -1
     data = inf_train_gen() # data
 
     for e in range(EPOCHS):
@@ -146,9 +144,9 @@ if __name__ == '__main__':
                     gradient_penalty_vis = calc_gradient_penalty(netD_vis, vis_img, fusion_img, lambda2)
                     # gradient_penalty_vis.backward()
                     D_loss_vis = D_fake_vis + D_real_vis + gradient_penalty_vis
-                    print('D_real_vis:\t',D_real_vis)
-                    print('D_fake_vis:\t', D_fake_vis)
-                    print('gradient_penalty_vis:\t', gradient_penalty_vis)
+                    # print('D_real_vis:\t',D_real_vis)
+                    # print('D_fake_vis:\t', D_fake_vis)
+                    # print('gradient_penalty_vis:\t', gradient_penalty_vis)
 
                     D_loss_vis.backward()
                     # optimizerD_vis.step()
@@ -164,7 +162,7 @@ if __name__ == '__main__':
 
                     # print('D_real_ir:\t', D_real_ir)
                     # print('D_fake_ir:\t', D_fake_ir)
-                    print('gradient_penalty_ir:\t', gradient_penalty_ir)
+                    # print('gradient_penalty_ir:\t', gradient_penalty_ir)
 
                     D_loss_ir.backward()
                     optimizerD_vis.step()
@@ -181,21 +179,21 @@ if __name__ == '__main__':
 
             optimizerG.zero_grad()
 
-            # _data = next(data)
-            # vis_img = _data[0].cuda()
-            # ir_img = _data[1].cuda()
-            # vis_list = netG.encoder(vis_img)
-            # ir_list = netG.encoder(ir_img)  # [g1,g2,g3,x3]
-            # fusion_img = netG.decoder(vis_list, ir_list)
+            _data = next(data)
+            vis_img = _data[0].cuda()
+            ir_img = _data[1].cuda()
+            vis_list = netG.encoder(vis_img)
+            ir_list = netG.encoder(ir_img)  # [g1,g2,g3,x3]
+            fusion_img = netG.decoder(vis_list, ir_list)
 
             G_fake_vis = -netD_vis(fusion_img).mean()
             G_fake_ir = -netD_ir(fusion_img).mean()
             G_loss_content = calc_generator_content_loss(vis_img, ir_img, fusion_img)
             G_loss_advers = G_fake_ir + G_fake_vis
             G_loss_total = G_loss_advers + G_loss_content
-            print('G_fake_vis:\t',G_fake_vis)
-            print('G_fake_ir:\t',G_fake_ir)
-            print('G_loss_content:\t',G_loss_content)
+            # print('G_fake_vis:\t',G_fake_vis)
+            # print('G_fake_ir:\t',G_fake_ir)
+            # print('G_loss_content:\t',G_loss_content)
             G_loss_total.backward()
             optimizerG.step()
 
