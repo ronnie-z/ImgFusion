@@ -140,7 +140,7 @@ if __name__ == '__main__':
                     # gradient_penalty_vis.backward()
                     D_loss_vis = D_fake_vis + D_real_vis + gradient_penalty_vis
                     D_loss_vis.backward()
-                    optimizerD_vis.step()
+                    # optimizerD_vis.step()
 
                     #train netD_ir
                     D_real_ir = -netD_ir(ir_img).mean()  # size: batch_size
@@ -151,6 +151,7 @@ if __name__ == '__main__':
                     # gradient_penalty_ir.backward()
                     D_loss_ir = D_fake_ir + D_real_ir + gradient_penalty_ir
                     D_loss_ir.backward()
+                    optimizerD_vis.step()
                     optimizerD_ir.step()
                     D_loss_total = D_loss_vis + D_loss_ir
 
