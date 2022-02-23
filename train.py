@@ -144,6 +144,7 @@ if __name__ == '__main__':
                     gradient_penalty_vis = calc_gradient_penalty(netD_vis, vis_img, fusion_img, lambda2)
                     # gradient_penalty_vis.backward()
                     D_loss_vis = D_fake_vis + D_real_vis + gradient_penalty_vis
+                    assert torch.isnan(D_real_vis).sum() == 0, print('D_real_vis:\t',D_real_vis)
                     D_loss_vis.backward()
                     # optimizerD_vis.step()
 
@@ -156,7 +157,7 @@ if __name__ == '__main__':
                     # gradient_penalty_ir.backward()
                     D_loss_ir = D_fake_ir + D_real_ir + gradient_penalty_ir
                     D_loss_ir.backward()
-                    # optimizerD_vis.step()
+                    optimizerD_vis.step()
                     optimizerD_ir.step()
                     D_loss_total = D_loss_vis + D_loss_ir
 
@@ -188,7 +189,7 @@ if __name__ == '__main__':
             if iter % 10 == 9:
                 logger.info('Epoch-{}, Iterator-[{}/{}] ## Train D:(D_loss_vis:{}, D_loss_ir:{}' 
                             ', D_loss_total:{}) ## Train G:(G_loss_advers:{}, G_loss_content:{},' 
-                            'G_loss_total:{})'.format(e, iter,ITERATES, D_loss_vis, D_loss_ir, D_loss_total,G_loss_advers,
+                            'G_loss_total:{})'.format(e, iter+1,ITERATES, D_loss_vis, D_loss_ir, D_loss_total,G_loss_advers,
                                                       G_loss_content, G_loss_total))
 
 
