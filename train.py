@@ -83,7 +83,7 @@ def laplacian(img_numpy):
     laplacian_img = convertScaleAbs(laplacian_img)
 
 def img_gradient_calc(img):
-    img_numpy = np.array(img.cpu())   # b 1 128 128
+    img_numpy = np.array(img.detach())   # b 1 128 128
     img_list = [laplacian(img_numpy[i]) for i in range(img_numpy.shape[0])]
     img_numpy = np.stack(img_list, 0)
     return torch.from_numpy(img_numpy).to('cuda:0')
