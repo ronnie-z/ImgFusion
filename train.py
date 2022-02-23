@@ -144,7 +144,7 @@ if __name__ == '__main__':
                     gradient_penalty_vis = calc_gradient_penalty(netD_vis, vis_img, fusion_img, lambda2)
                     # gradient_penalty_vis.backward()
                     D_loss_vis = D_fake_vis + D_real_vis + gradient_penalty_vis
-                    assert torch.isnan(D_real_vis).sum() == 0, print('D_real_vis:\t',D_real_vis)
+                    print('D_real_vis:\t',D_real_vis)
                     D_loss_vis.backward()
                     # optimizerD_vis.step()
 
