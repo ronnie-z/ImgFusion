@@ -4,6 +4,9 @@
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+from matplotlib import pyplot as plt
+
 
 class UpsampleReshape_eval(torch.nn.Module):
     def __init__(self):
@@ -41,6 +44,7 @@ class UpsampleReshape_eval(torch.nn.Module):
         x2 = reflection_pad(x2)
         return x2
 
+
 class ConvLayer(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride, relu='prelu'):
         super(ConvLayer, self).__init__()
@@ -68,12 +72,12 @@ class ConvLayer(nn.Module):
 class Block(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride, relu='prelu'):
         super(Block, self).__init__()
-        inner_channel = int(in_channels / 2)
-        # out_channels_def = out_channels
+        # inner_channel = int(in_channels / 2)
+        inner_channel = in_channels
         blocklist = []
 
-        blocklist += [ConvLayer(in_channels, inner_channel, kernel_size, stride),
-                       ConvLayer(inner_channel, out_channels, 1, stride, relu)]
+        blocklist += [ConvLayer(in_channels, inner_channel, kernel_size, 1),
+                       ConvLayer(inner_channel, out_channels, kernel_size, stride, relu)]
         self.encoderblock = nn.Sequential(*blocklist)
 
     def forward(self, x):
@@ -96,17 +100,17 @@ class GCNet(nn.Module):
             self.channel_add_conv = nn.Sequential(
                 nn.Conv2d(in_channel, in_channel // ratio, kernel_size = 1),
                 # nn.LayerNorm([in_channel // ratio, 1, 1]),
-                nn.ReLU(inplace = True),
+                nn.PReLU(in_channel // ratio),
                 nn.Conv2d(in_channel // ratio, in_channel, kernel_size = 1)
             )
         else:
             self.channel_add_conv = None
         if 'channel_mul' in fusions:
             self.channel_mul_conv = nn.Sequential(
-                nn.Conv2d(self.inplanes, self.planes // ratio, kernel_size = 1),
+                nn.Conv2d(in_channel, in_channel // ratio, kernel_size = 1),
                 # nn.LayerNorm([self.planes // ratio, 1, 1]),
-                nn.ReLU(inplace = True),
-                nn.Conv2d(self.planes // ratio, self.inplanes, kernel_size = 1)
+                nn.PReLU(in_channel // ratio),
+                nn.Conv2d(in_channel // ratio, in_channel, kernel_size = 1)
             )
         else:
             self.channel_mul_conv = None
@@ -156,9 +160,9 @@ class GCNet(nn.Module):
         return out
 
 class Generator(nn.Module):
-    def __init__(self, in_channels=1, firstLayer_out_channels=32, out_channels=1):
+    def __init__(self, in_channels=1, conv_in_channel=32, out_channels=1):
         super(Generator, self).__init__()
-        eb_filter = [32, 64, 64]
+        eb_filter = [64, 128, 128]
         kernel_size = 3
         stride = 1
 
@@ -166,8 +170,8 @@ class Generator(nn.Module):
         self.up = nn.Upsample(scale_factor = 2)
         self.up_eval = UpsampleReshape_eval()
         # encoder
-        self.conv0 = ConvLayer(in_channels = in_channels, out_channels = firstLayer_out_channels, kernel_size=3, stride=1)
-        self.EB1 = Block(firstLayer_out_channels, eb_filter[0], kernel_size = 3, stride = 1)
+        self.conv_in = ConvLayer(in_channels = in_channels, out_channels = conv_in_channel, kernel_size=3, stride=1)
+        self.EB1 = Block(conv_in_channel, eb_filter[0], kernel_size = 3, stride = 1)
         self.EB2 = Block(eb_filter[0], eb_filter[1], 3, 1)
         self.EB3 = Block(eb_filter[1], eb_filter[2], 3, 1)
 
@@ -177,13 +181,13 @@ class Generator(nn.Module):
         self.GCNet3 = GCNet(eb_filter[2])
 
         # decoder   3*eb_filter[0], out_channels
-        self.DB1 = Block(3*eb_filter[0], out_channels, kernel_size = 3, stride = 1, relu = 'tanh')
-        self.DB2 = Block(3*eb_filter[1], eb_filter[0], 3, 1)
-        self.DB3 = Block(4*eb_filter[2], eb_filter[1], 3, 1)
-
+        self.DB1 = Block(2*eb_filter[0] + eb_filter[1], eb_filter[0], kernel_size = 3, stride = 1)
+        self.DB2 = Block(2*eb_filter[1] + eb_filter[2], eb_filter[1], 3, 1)
+        self.DB3 = Block(4*eb_filter[2], eb_filter[2], 3, 1)
+        self.conv_out = ConvLayer(in_channels = eb_filter[0], out_channels = out_channels, kernel_size=3, stride=1, relu = 'tanh')
 
     def encoder(self, input):
-        x = self.conv0(input)
+        x = self.conv_in(input)
         x1 = self.EB1(x)
         x2 = self.EB2(self.pool(x1))
         x3 = self.EB3(self.pool(x2))
@@ -194,33 +198,34 @@ class Generator(nn.Module):
         x3 = self.DB3(torch.cat([en_vis_list[2], en_ir_list[2], en_vis_list[3], en_ir_list[3]], dim = 1))
         x2 = self.DB2(torch.cat([en_vis_list[1], en_ir_list[1], self.up(x3)], dim = 1))
         x1 = self.DB1(torch.cat([en_vis_list[0], en_ir_list[0], self.up(x2)], dim = 1))
-        return x1
+        return self.conv_out(x1)
 
     def decoder_eval(self, en_vis_list, en_ir_list):
-        # 考虑到测试的图片大小(HW)不一
+        #考虑到测试的图片大小(HW)不一
         x3 = self.DB3(torch.cat([en_vis_list[2], en_ir_list[2], en_vis_list[3], en_ir_list[3]], dim = 1))
         x2 = self.DB2(torch.cat([en_vis_list[1], en_ir_list[1], self.up_eval(en_vis_list[1], x3)], dim = 1))
         x1 = self.DB1(torch.cat([en_vis_list[0], en_ir_list[0], self.up_eval(en_vis_list[0], x2)], dim = 1))
 
-        return x1
+        return self.conv_out(x1)
+
 class Discriminator(nn.Module):
     def __init__(self, in_channels=1, firstLayer_out_channels=32):
         super(Discriminator, self).__init__()
 
         self.conv0 = ConvLayer(in_channels, firstLayer_out_channels, 3, 1, 'leakyRelu')
         self.block1 = Block(firstLayer_out_channels, 64, 3, 2, 'leakyRelu')
-        self.block2 = Block(64, 128, 3, 1, 'leakyRelu')
-        self.block3 = Block(128, 32, 3, 1, 'leakyRelu')
-        self.fc1 = nn.Linear(32*32*32, 256)
+        self.block2 = Block(64, 128, 3, 2, 'leakyRelu')
+        self.block3 = Block(128, 256, 3, 2, 'leakyRelu')
+        self.fc1 = nn.Linear(256*16*16, 1024)
         self.relu = nn.LeakyReLU()
-        self.fc2 = nn.Linear(256, 1)
+        self.fc2 = nn.Linear(1024, 1)
 
         self.block = nn.Sequential(self.conv0, self.block1, self.block2, self.block3)
         self.fc = nn.Sequential(self.fc1, self.relu, self.fc2)
 
     def forward(self, x):
         x = self.block(x)
-        x = x.view(-1, 32*32*32)
+        x = x.view(-1, 256*16*16)
         return self.fc(x).view(-1)
 
 

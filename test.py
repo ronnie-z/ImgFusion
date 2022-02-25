@@ -35,7 +35,7 @@ def save_img(img, count):
     img_fusion = (img_fusion - np.min(img_fusion)) / (np.max(img_fusion) - np.min(img_fusion))
     img_fusion = img_fusion * 255
     img_fusion = img_fusion.transpose(1, 2, 0).astype('uint8')
-    cv2.imwrite('./result_first_train_e0/img_fusion_%d.jpg' % count ,img_fusion)
+    cv2.imwrite('./result_second_train/img_fusion_%d.jpg' % count ,img_fusion)
     # if img_fusion.shape[2] == 1:  # 如果是灰度图
     #     img_fusion = img_fusion.reshape([img_fusion.shape[0], img_fusion.shape[1]])
 
@@ -48,7 +48,7 @@ def load_pretrain(model, ckpt_path):
         ckpt_dict = torch.load(ckpt_path, map_location=lambda storage, loc: storage.cuda(device))   #模型加载到GPU上
 
 
-    model.load_state_dict(ckpt_dict, strict=False)   #加载预训练模型到model
+    model.load_state_dict(ckpt_dict['netG_state'], strict=False)   #加载预训练模型到model
     return model
 
 
@@ -74,7 +74,7 @@ def main(ckpt_path):
 
 
 if __name__ == '__main__':
-    ckpt_path = 'model_output/checkpoint_e0_Gen.pth'
+    ckpt_path = './model_output/checkpoint_e1.pth'
     main(ckpt_path)
     # ckpt_dict = torch.load(ckpt_path)
     # for k,v in ckpt_dict.items():

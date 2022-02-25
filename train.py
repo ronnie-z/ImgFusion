@@ -1,14 +1,14 @@
 import argparse
 import os
 import time
-
 import cv2
 import numpy as np
 from cv2 import convertScaleAbs
 from torch import optim
 import torch.autograd as autograd
 from torch.autograd import Variable
-from torch.utils.tensorboard import writer
+from torchvision.models import vgg19
+from torch.utils.tensorboard import SummaryWriter
 from dataset import DataSet
 from torchvision import transforms
 import sys, os
@@ -25,11 +25,11 @@ EPOCHS = 5
 ITERATES = 1000
 CRITIC_ITERS = 5
 BATCH_SIZE = 16
-lambda1 = 0.1
+lambda1 = 1
 lambda2 = 10
 lambda3 = 10
-gamma = 1e-5 # γ
-mu = 120 # μ
+gamma = 1e-3 # γ
+mu = 160 # μ
 
 use_cuda = torch.cuda.is_available()
 logger_init()
@@ -49,14 +49,14 @@ train_trainsform = transforms.Compose([
         transforms.Normalize(mean = [0.5], std = [0.5]),
         # transforms.RandomCrop(size=64, pad_if_needed=True),
     ])
+def get_Dataloader():
+    train_dataset = DataSet('/data/data_zkl/40_pairs_tno_vot_split/vis', train_trainsform)
 
-train_dataset = DataSet('/data/data_zkl/40_pairs_tno_vot_split/vis', train_trainsform)
-
-train_loader = data.DataLoader(train_dataset, batch_size = BATCH_SIZE, shuffle=True, num_workers = 2, drop_last = True)
-
+    train_loader = data.DataLoader(train_dataset, batch_size = BATCH_SIZE, shuffle=True, num_workers = 2, drop_last = True)
+    return train_loader
 def inf_train_gen():
     while True:
-        for batch_img in train_loader:
+        for batch_img in get_Dataloader():
             yield batch_img
 
 def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA=1):
@@ -82,7 +82,9 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA=1):
 mseLoss = nn.MSELoss()
 
 def laplacian(img_numpy):
-    laplacian_img = cv2.Laplacian(img_numpy, cv2.CV_32F, ksize = 3)
+    kernel = np.array([[1,1,1], [1,-8,1], [1,1,1]])
+    # laplacian_img = cv2.Laplacian(img_numpy, cv2.CV_32F, ksize = 3)
+    laplacian_img = cv2.filter2D(img_numpy, cv2.CV_32F, kernel=kernel)
     laplacian_img = convertScaleAbs(laplacian_img)
     return laplacian_img.astype(np.float32)
 
@@ -97,16 +99,17 @@ def calc_generator_content_loss(vis_img, ir_img, fusion_img):
     loss_vis_f = mseLoss(img_gradient_calc(fusion_img), img_gradient_calc(vis_img))
     return lambda1*(mu*loss_ir_f + gamma*loss_vis_f)
 
-if __name__ == '__main__':
-    netG = Generator(in_channels = 1, firstLayer_out_channels = 32, out_channels = 1)
+def train():
+    writer = SummaryWriter(log_dir = './log')
+    netG = Generator()
     netG = netG.cuda()
     netD_vis = Discriminator().cuda()
     netD_ir = Discriminator().cuda()
 
     # optimizer
-    optimizerG = optim.Adam(netG.parameters(), lr = 1e-4)
-    optimizerD_vis = optim.Adam(netD_vis.parameters(), lr = 1e-4)
-    optimizerD_ir = optim.Adam(netD_ir.parameters(), lr = 1e-4)
+    optimizerG = optim.Adam(netG.parameters(), lr = 1e-3)
+    optimizerD_vis = optim.Adam(netD_vis.parameters(), lr = 1e-3)
+    optimizerD_ir = optim.Adam(netD_ir.parameters(), lr = 1e-3)
 
     data = inf_train_gen() # data
 
@@ -134,17 +137,15 @@ if __name__ == '__main__':
                     fusion_img = fusion_img.detach()
                     fusion_img.requires_grad = True
 
-                    Dis_number_of_i = epoch * ITERATES + iter * CRITIC_ITERS + i
+                    Dis_number_of_i = epoch*ITERATES + iter*CRITIC_ITERS + i
                     # train netD_vis
                     D_real_vis = -netD_vis(vis_img).mean() # size: batch_size
                     D_fake_vis = netD_vis(fusion_img).mean()
                     gradient_penalty_vis = calc_gradient_penalty(netD_vis, vis_img, fusion_img, lambda2)
                     D_loss_vis = D_fake_vis + D_real_vis + gradient_penalty_vis
-
-                    writer.add_scalars('Discriminator/details_of_vis',
-                                       {'D_real_vis': D_real_vis, 'D_fake_vis': D_fake_vis,
-                                        'gradient_penalty_vis': gradient_penalty_vis,
-                                        'D_loss_total_vis': D_loss_vis}, Dis_number_of_i)
+                    writer.add_scalars('Discriminator/details_of_vis', {'D_real_vis': D_real_vis, 'D_fake_vis': D_fake_vis,
+                                                             'gradient_penalty_vis': gradient_penalty_vis,
+                                                             'D_loss_total_vis': D_loss_vis}, Dis_number_of_i)
                     D_loss_vis.backward()
                     optimizerD_vis.step()
 
@@ -153,15 +154,14 @@ if __name__ == '__main__':
                     D_fake_ir = netD_ir(fusion_img).mean()
                     gradient_penalty_ir = calc_gradient_penalty(netD_ir, ir_img, fusion_img, lambda3)
                     D_loss_ir = D_fake_ir + D_real_ir + gradient_penalty_ir
-
                     writer.add_scalars('Discriminator/details_of_ir', {'D_real_ir': D_real_ir, 'D_fake_ir': D_fake_ir,
-                                                                       'gradient_penalty_ir': gradient_penalty_ir,
-                                                                       'D_loss_total_ir': D_loss_ir}, Dis_number_of_i)
+                                                             'gradient_penalty_ir': gradient_penalty_ir,
+                                                             'D_loss_total_ir': D_loss_ir}, Dis_number_of_i)
+
                     D_loss_ir.backward()
                     optimizerD_ir.step()
                     D_loss_total = D_loss_vis + D_loss_ir
                     writer.add_scalar('Discriminator/loss_total_Dis', D_loss_total, Dis_number_of_i)
-
             ############################
             # (2) Update G network
             ###########################
@@ -172,44 +172,47 @@ if __name__ == '__main__':
 
             optimizerG.zero_grad()
 
+            Gen_number_of_i = epoch * ITERATES + iter
+
             _data = next(data)
             vis_img = _data[0].cuda()
             ir_img = _data[1].cuda()
             vis_list = netG.encoder(vis_img)
             ir_list = netG.encoder(ir_img)  # [g1,g2,g3,x3]
             fusion_img = netG.decoder(vis_list, ir_list)
+            fusion_img = fusion_img.detach()
+            fusion_img.requires_grad = True
 
             G_fake_vis = -netD_vis(fusion_img).mean()
             G_fake_ir = -netD_ir(fusion_img).mean()
             G_loss_content = calc_generator_content_loss(vis_img, ir_img, fusion_img)
             G_loss_advers = G_fake_ir + G_fake_vis
             G_loss_total = G_loss_advers + G_loss_content
-
-            Gen_number_of_i = epoch * ITERATES + iter
             writer.add_scalars('Generator/details', {'G_fake_vis': G_fake_vis, 'G_fake_ir': G_fake_ir,
                                                      'G_loss_advers': G_loss_advers,
                                                      'G_loss_content': G_loss_content}, Gen_number_of_i)
             writer.add_scalar('Generator/loss_total_Gen', D_loss_total, Gen_number_of_i)
-
             G_loss_total.backward()
             optimizerG.step()
 
             if iter % 100 == 99:
-                logger.info('Epoch-{}, Iterator-[{}/{}]:\tTrain D:(D_loss_vis:{}\tgrad_vis:{}\t--D_loss_ir:{}\t'
-                            'grad_ir:{})\t\tTrain G:(G_loss_advers:{}\tG_loss_content:{}'
-                            ')'.format(epoch, iter + 1, ITERATES, D_loss_vis, gradient_penalty_vis, D_loss_ir,
-                                       gradient_penalty_ir, G_loss_advers, G_loss_content))
+                logger.info('Epoch-{}, Iterator-[{}/{}]:\tTrain D:(D_loss_vis:{}\tgrad_vis:{}\t--D_loss_ir:{}\t' 
+                            'grad_ir:{})\t\tTrain G:(G_loss_advers:{}\tG_loss_content:{}' 
+                            ')'.format(epoch, iter+1,ITERATES, D_loss_vis, gradient_penalty_vis, D_loss_ir,
+                                                      gradient_penalty_ir, G_loss_advers, G_loss_content))
 
-        state = {'netG_state': netG.state_dict(),
-                 'netD_vis_state': netD_vis.state_dict(),
-                 'netD_ir_state': netD_ir.state_dict(),
-                 'epoch': epoch,
-                 'optimizerG': optimizerG.state_dict(),
-                 'optimizerD_vis': optimizerD_vis.state_dict(),
-                 'optimizerD_ir': optimizerD_ir.state_dict()}
+        state = {   'netG_state': netG.state_dict(),
+                    'netD_vis_state': netD_vis.state_dict(),
+                    'netD_ir_state': netD_ir.state_dict(),
+                    'epoch': epoch,
+                    'optimizerG': optimizerG.state_dict(),
+                    'optimizerD_vis': optimizerD_vis.state_dict(),
+                    'optimizerD_ir': optimizerD_ir.state_dict() }
+        filename = './output/checkpoint_e%d.pth' % epoch
+        torch.save(state , filename)
 
-        filename = 'checkpoint_e%d.pth' % epoch
-        torch.save(state, filename)
 
 
+if __name__ == '__main__':
+    train()
 

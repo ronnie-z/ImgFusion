@@ -23,7 +23,7 @@ def logger_init():
 
     # 2.文件输出  负责文件输出
     # 没有设置输出级别，将用logger1的输出级别(并且输出级别在设置的时候级别不能比Logger的低!!!)
-    fh1 = logging.FileHandler(filename="log.txt")
+    fh1 = logging.FileHandler(filename="log_second_train.txt")
     fh1.setFormatter(get_format())
 
     # 格式器
