@@ -8,7 +8,7 @@ from cv2 import convertScaleAbs
 from torch import optim
 import torch.autograd as autograd
 from torch.autograd import Variable
-
+from torch.utils.tensorboard import writer
 from dataset import DataSet
 from torchvision import transforms
 import sys, os
@@ -110,7 +110,7 @@ if __name__ == '__main__':
 
     data = inf_train_gen() # data
 
-    for e in range(EPOCHS):
+    for epoch in range(EPOCHS):
         start_time = time.time()
         for iter in range(ITERATES):
             ############################
@@ -134,39 +134,33 @@ if __name__ == '__main__':
                     fusion_img = fusion_img.detach()
                     fusion_img.requires_grad = True
 
-
+                    Dis_number_of_i = epoch * ITERATES + iter * CRITIC_ITERS + i
                     # train netD_vis
                     D_real_vis = -netD_vis(vis_img).mean() # size: batch_size
-                    # D_real_vis.backward()
                     D_fake_vis = netD_vis(fusion_img).mean()
-                    # D_fake_vis.backward()
                     gradient_penalty_vis = calc_gradient_penalty(netD_vis, vis_img, fusion_img, lambda2)
-                    # gradient_penalty_vis.backward()
                     D_loss_vis = D_fake_vis + D_real_vis + gradient_penalty_vis
-                    # print('D_real_vis:\t',D_real_vis)
-                    # print('D_fake_vis:\t', D_fake_vis)
-                    # print('gradient_penalty_vis:\t', gradient_penalty_vis)
 
+                    writer.add_scalars('Discriminator/details_of_vis',
+                                       {'D_real_vis': D_real_vis, 'D_fake_vis': D_fake_vis,
+                                        'gradient_penalty_vis': gradient_penalty_vis,
+                                        'D_loss_total_vis': D_loss_vis}, Dis_number_of_i)
                     D_loss_vis.backward()
-                    # optimizerD_vis.step()
+                    optimizerD_vis.step()
 
                     #train netD_ir
                     D_real_ir = -netD_ir(ir_img).mean()  # size: batch_size
-                    # D_real_ir.backward()
                     D_fake_ir = netD_ir(fusion_img).mean()
-                    # D_fake_ir.backward()
                     gradient_penalty_ir = calc_gradient_penalty(netD_ir, ir_img, fusion_img, lambda3)
-                    # gradient_penalty_ir.backward()
                     D_loss_ir = D_fake_ir + D_real_ir + gradient_penalty_ir
 
-                    # print('D_real_ir:\t', D_real_ir)
-                    # print('D_fake_ir:\t', D_fake_ir)
-                    # print('gradient_penalty_ir:\t', gradient_penalty_ir)
-
+                    writer.add_scalars('Discriminator/details_of_ir', {'D_real_ir': D_real_ir, 'D_fake_ir': D_fake_ir,
+                                                                       'gradient_penalty_ir': gradient_penalty_ir,
+                                                                       'D_loss_total_ir': D_loss_ir}, Dis_number_of_i)
                     D_loss_ir.backward()
-                    optimizerD_vis.step()
                     optimizerD_ir.step()
                     D_loss_total = D_loss_vis + D_loss_ir
+                    writer.add_scalar('Discriminator/loss_total_Dis', D_loss_total, Dis_number_of_i)
 
             ############################
             # (2) Update G network
@@ -190,24 +184,32 @@ if __name__ == '__main__':
             G_loss_content = calc_generator_content_loss(vis_img, ir_img, fusion_img)
             G_loss_advers = G_fake_ir + G_fake_vis
             G_loss_total = G_loss_advers + G_loss_content
-            # print('G_fake_vis:\t',G_fake_vis)
-            # print('G_fake_ir:\t',G_fake_ir)
-            # print('G_loss_content:\t',G_loss_content)
+
+            Gen_number_of_i = epoch * ITERATES + iter
+            writer.add_scalars('Generator/details', {'G_fake_vis': G_fake_vis, 'G_fake_ir': G_fake_ir,
+                                                     'G_loss_advers': G_loss_advers,
+                                                     'G_loss_content': G_loss_content}, Gen_number_of_i)
+            writer.add_scalar('Generator/loss_total_Gen', D_loss_total, Gen_number_of_i)
+
             G_loss_total.backward()
             optimizerG.step()
 
-            if iter % 10 == 9:
-                logger.info('Epoch-{}, Iterator-[{}/{}] ## Train D:(D_loss_vis:{}, D_loss_ir:{}' 
-                            ', D_loss_total:{}) ## Train G:(G_loss_advers:{}, G_loss_content:{},' 
-                            'G_loss_total:{})'.format(e, iter+1,ITERATES, D_loss_vis, D_loss_ir, D_loss_total,G_loss_advers,
-                                                      G_loss_content, G_loss_total))
+            if iter % 100 == 99:
+                logger.info('Epoch-{}, Iterator-[{}/{}]:\tTrain D:(D_loss_vis:{}\tgrad_vis:{}\t--D_loss_ir:{}\t'
+                            'grad_ir:{})\t\tTrain G:(G_loss_advers:{}\tG_loss_content:{}'
+                            ')'.format(epoch, iter + 1, ITERATES, D_loss_vis, gradient_penalty_vis, D_loss_ir,
+                                       gradient_penalty_ir, G_loss_advers, G_loss_content))
 
-        state = {'netD_vis_state': netD_vis.state_dict(),
-                 'netD_ir_state': netD_ir.state_dict()}
-        gen_filename = 'checkpoint_e%d_Gen.pth' % e
-        Disc_filename = 'checkpoint_e%d_Disc.pth' % e
-        torch.save(netG.state_dict(), gen_filename)
-        torch.save(state, Disc_filename)
+        state = {'netG_state': netG.state_dict(),
+                 'netD_vis_state': netD_vis.state_dict(),
+                 'netD_ir_state': netD_ir.state_dict(),
+                 'epoch': epoch,
+                 'optimizerG': optimizerG.state_dict(),
+                 'optimizerD_vis': optimizerD_vis.state_dict(),
+                 'optimizerD_ir': optimizerD_ir.state_dict()}
+
+        filename = 'checkpoint_e%d.pth' % epoch
+        torch.save(state, filename)
 
 
 

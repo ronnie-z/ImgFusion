@@ -4,9 +4,42 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from matplotlib import pyplot as plt
 
+class UpsampleReshape_eval(torch.nn.Module):
+    def __init__(self):
+        super(UpsampleReshape_eval, self).__init__()
+        self.up = nn.Upsample(scale_factor=2)
+
+    def forward(self, x1, x2):
+        x2 = self.up(x2)
+        shape_x1 = x1.size()
+        shape_x2 = x2.size()
+        left = 0
+        right = 0
+        top = 0
+        bot = 0
+        if shape_x1[3] != shape_x2[3]:
+            lef_right = shape_x1[3] - shape_x2[3]
+            if lef_right%2 == 0.0:
+                left = int(lef_right/2)
+                right = int(lef_right/2)
+            else:
+                left = int(lef_right / 2)
+                right = int(lef_right - left)
+
+        if shape_x1[2] != shape_x2[2]:
+            top_bot = shape_x1[2] - shape_x2[2]
+            if top_bot%2 == 0:
+                top = int(top_bot/2)
+                bot = int(top_bot/2)
+            else:
+                top = int(top_bot / 2)
+                bot = int(top_bot - top)
+
+        reflection_padding = [left, right, top, bot]
+        reflection_pad = nn.ReflectionPad2d(reflection_padding)
+        x2 = reflection_pad(x2)
+        return x2
 
 class ConvLayer(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride, relu='prelu'):
@@ -131,7 +164,7 @@ class Generator(nn.Module):
 
         self.pool = nn.MaxPool2d(2, 2) # 2倍下采样
         self.up = nn.Upsample(scale_factor = 2)
-
+        self.up_eval = UpsampleReshape_eval()
         # encoder
         self.conv0 = ConvLayer(in_channels = in_channels, out_channels = firstLayer_out_channels, kernel_size=3, stride=1)
         self.EB1 = Block(firstLayer_out_channels, eb_filter[0], kernel_size = 3, stride = 1)
@@ -163,6 +196,13 @@ class Generator(nn.Module):
         x1 = self.DB1(torch.cat([en_vis_list[0], en_ir_list[0], self.up(x2)], dim = 1))
         return x1
 
+    def decoder_eval(self, en_vis_list, en_ir_list):
+        # 考虑到测试的图片大小(HW)不一
+        x3 = self.DB3(torch.cat([en_vis_list[2], en_ir_list[2], en_vis_list[3], en_ir_list[3]], dim = 1))
+        x2 = self.DB2(torch.cat([en_vis_list[1], en_ir_list[1], self.up_eval(en_vis_list[1], x3)], dim = 1))
+        x1 = self.DB1(torch.cat([en_vis_list[0], en_ir_list[0], self.up_eval(en_vis_list[0], x2)], dim = 1))
+
+        return x1
 class Discriminator(nn.Module):
     def __init__(self, in_channels=1, firstLayer_out_channels=32):
         super(Discriminator, self).__init__()
